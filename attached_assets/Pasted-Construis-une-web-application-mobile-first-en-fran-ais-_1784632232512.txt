@@ -1,0 +1,168 @@
+Construis une web application mobile-first en français, intuitive et rapide, destinée aux étudiants nigériens qui veulent partir étudier à l'étranger. L'app est un test d'orientation qui donne d'abord de la valeur à l'étudiant (des pistes réelles adaptées à son profil), puis capte son contact et l'oriente vers la bonne prochaine étape selon son budget.
+
+## 1. Objectif
+
+L'app sert de porte d'entrée pour l'agence KPB Education. Elle doit :
+1. Faire vivre un mini-parcours d'orientation agréable (6 questions max, une par écran).
+2. Donner à l'étudiant un résultat personnalisé et concret (des pistes de destinations et d'opportunités adaptées à son profil).
+3. Capter son prénom et son numéro WhatsApp.
+4. Le router automatiquement : les profils avec un budget suffisant vont vers WhatsApp (conseillers KPB) ; les profils à petit budget vont vers une masterclass gratuite sur les bourses.
+5. Enregistrer chaque lead dans une base Supabase pour le suivi.
+
+## 2. Stack technique
+
+- Vite + React + TypeScript + Tailwind CSS.
+- Supabase pour la base de données (table des leads).
+- Mobile-first absolu : optimisé pour smartphone Android d'entrée de gamme et connexion lente. Chargement rapide, images légères, pas d'animations lourdes.
+- Toute l'interface, tous les textes, tous les boutons en français.
+
+## 3. Parcours utilisateur
+
+Écran d'accueil → 6 questions (une par écran, avec barre de progression) → écran de capture (prénom + WhatsApp) → écran de résultats personnalisés avec le bon appel à l'action selon le budget.
+
+L'utilisateur doit pouvoir avancer en tapant sur des boutons (choix multiples), avec un minimum de saisie clavier. Gros boutons adaptés au pouce. Bouton « Retour » disponible à chaque étape.
+
+## 4. Les écrans
+
+### Écran d'accueil
+- Titre accrocheur : « Découvre en 2 minutes les vraies opportunités pour partir étudier à l'étranger »
+- Sous-titre : « Réponds à quelques questions et reçois des pistes concrètes adaptées à ton profil. Gratuit. »
+- Un seul bouton : « Commencer le test »
+- Petite mention de réassurance sous le bouton : « Déjà +1 200 étudiants accompagnés par KPB Education »
+
+### Question 1 — Niveau d'études actuel
+« Où en es-tu dans tes études ? »
+Options : Au lycée / Bac en cours · Bac obtenu · En licence · Licence obtenue · En master ou plus
+
+### Question 2 — Échéance
+« Tu veux partir pour quelle rentrée ? »
+Options : Rentrée 2026 · Rentrée 2027 · Plus tard · Je ne sais pas encore
+
+### Question 3 — Destination
+« Quelle destination t'intéresse le plus ? » (choix multiple autorisé)
+Options : France · Maroc · Turquie · Allemagne · Royaume-Uni · USA · Dubaï · Chine · Je ne sais pas encore, aide-moi à choisir
+
+### Question 4 — Domaine (champ de recherche)
+« Dans quel domaine veux-tu étudier ? »
+Affiche un champ de recherche (combobox / liste déroulante filtrable) : l'étudiant tape les premières lettres et la liste se filtre en temps réel, puis il sélectionne un domaine. Prévois une option « Autre » en bas de liste ; si l'étudiant la choisit, affiche un petit champ texte libre pour qu'il précise son domaine.
+
+Liste des 20 domaines à proposer :
+1. Commerce / Management
+2. Finance / Comptabilité / Banque
+3. Marketing / Communication
+4. Informatique / Développement logiciel
+5. Data / Intelligence artificielle
+6. Génie civil / BTP
+7. Génie électrique / Télécoms
+8. Génie mécanique / Industriel
+9. Énergie / Mines / Pétrole
+10. Médecine / Pharmacie
+11. Sciences infirmières / Paramédical
+12. Droit / Sciences juridiques
+13. Sciences politiques / Relations internationales
+14. Économie
+15. Sciences (Mathématiques, Physique, Chimie, Biologie)
+16. Agronomie / Agroalimentaire
+17. Architecture / Urbanisme
+18. Arts / Design / Audiovisuel
+19. Tourisme / Hôtellerie
+20. Logistique / Transport / Supply chain
++ Autre (avec champ texte libre)
+
+### Question 5 — Budget (question clé, à traiter avec tact)
+Intro rassurante au-dessus des options : « Étudier à l'étranger a un coût, mais il existe des solutions pour tous les budgets (dont des bourses). Sois honnête, ça nous aide à te proposer la meilleure piste. »
+« Quel budget ta famille peut-elle mobiliser par an pour tes études ? »
+Options (afficher le FCFA en gros, l'euro en petit) :
+- Moins de 1 640 000 FCFA (moins de 2 500 €)
+- 1 640 000 à 2 624 000 FCFA (2 500 à 4 000 €)
+- 2 624 000 à 4 592 000 FCFA (4 000 à 7 000 €)
+- Plus de 4 592 000 FCFA (plus de 7 000 €)
+- Je ne sais pas encore
+
+### Question 6 → Écran de capture
+« Presque fini ! Où doit-on t'envoyer tes résultats et tes pistes ? »
+Champs : Prénom (texte) · Numéro WhatsApp (téléphone, avec indicatif, par défaut +227 pour le Niger)
+Bouton : « Voir mes résultats »
+Mention sous le bouton : « On t'écrit uniquement pour t'aider dans ton projet d'études. »
+
+## 5. Logique de qualification et de routage
+
+Attribue un statut de lead selon la réponse à la question budget :
+- Plus de 7 000 € → statut « HOT »
+- 4 000 à 7 000 € → statut « WARM »
+- 2 500 à 4 000 € → statut « STANDARD »
+- Moins de 2 500 € → statut « COLD »
+- Je ne sais pas encore → statut « A_QUALIFIER »
+
+Routage sur l'écran de résultats :
+- HOT, WARM, STANDARD, A_QUALIFIER → appel à l'action principal = bouton « Réserver ma consultation gratuite pour ton dossier » vers WhatsApp (voir §9).
+- COLD → appel à l'action principal = bouton vers la masterclass gratuite sur les bourses (voir §9). En complément, un lien secondaire discret « Tu préfères parler à quelqu'un ? Contacte l'équipe » peut mener vers WhatsApp, mais la masterclass reste l'action mise en avant.
+
+## 6. Écran de résultats — contenu personnalisé
+
+Le résultat doit donner une vraie valeur avant l'appel à l'action, et rester personnalisé selon les réponses (niveau, destination, domaine, échéance).
+
+**Structure commune :**
+- Titre chaleureux avec le prénom : « [Prénom], voici les pistes réelles pour toi 🎯 »
+- 2 à 4 destinations recommandées selon ce qu'il a choisi (ou une suggestion s'il a répondu « je ne sais pas »), avec une phrase concrète pour chacune (type de programmes, atout de la destination pour son profil).
+- Une section « Ta prochaine étape ».
+- Si échéance = rentrée 2026 : ajouter un encart d'urgence « Les dates limites pour la rentrée 2026 approchent — ne tarde pas. »
+
+**Variante selon le statut :**
+- HOT / WARM / STANDARD / A_QUALIFIER : message « Ton profil correspond aux programmes que KPB Education accompagne. Un conseiller peut étudier ton dossier avec toi et t'aider à monter ta candidature. » + bouton principal « Réserver ma consultation gratuite pour ton dossier 📅 ».
+- COLD : message positif et non stigmatisant « Il existe des bourses qui peuvent alléger fortement, voire couvrir, le coût de tes études. La meilleure première étape pour toi : notre masterclass gratuite sur les bourses. » + bouton principal vers le webinaire, et un lien secondaire discret « Tu préfères parler à quelqu'un ? Contacte l'équipe ».
+
+**Bouton de partage (sur TOUS les profils, sous l'appel à l'action) :**
+Ajoute un bouton « Partage cet outil avec tes amis 🚀 » avec le sous-texte « Tes amis aussi peuvent trouver leur voie et étudier à l'étranger. » Ce bouton utilise l'API de partage native du téléphone (Web Share API) pour ouvrir le menu de partage (WhatsApp, etc.) avec un message pré-rempli du type : « Je viens de tester cet outil gratuit pour trouver des opportunités d'études à l'étranger 🎓 Teste-le toi aussi : [URL de l'app] ». Si le partage natif n'est pas disponible, propose un bouton de repli « Copier le lien » et un partage WhatsApp direct.
+
+## 7. Design et UX
+
+- Style : moderne, épuré, professionnel mais chaleureux et aspirationnel. Doit inspirer confiance à un étudiant ET à un parent.
+- Palette : bleu profond (confiance) comme couleur principale, orange/ambre chaud comme couleur d'accentuation pour les boutons d'action, blanc pour les fonds. Bon contraste, très lumineux.
+- Typographie sans-serif type Inter ou Montserrat, titres en gras.
+- Une seule question par écran, barre de progression en haut (ex. « Question 3 sur 6 »).
+- Micro-textes encourageants entre les étapes (« Super, continue ! »).
+- Transitions douces et légères entre écrans. Boutons larges, faciles à taper au pouce.
+- Icônes simples et lisibles pour les choix (drapeaux pour les destinations, etc.).
+
+## 8. Base de données (Supabase)
+
+Crée une table `leads` avec les colonnes :
+- id (uuid, clé primaire, auto)
+- created_at (timestamp, auto)
+- prenom (text)
+- whatsapp (text)
+- niveau_etudes (text)
+- echeance (text)
+- destinations (text, peut contenir plusieurs valeurs)
+- domaine (text)
+- budget_tranche (text)
+- statut (text : HOT / WARM / STANDARD / COLD / A_QUALIFIER)
+- oriente_vers (text : whatsapp / webinaire)
+
+Chaque soumission du formulaire enregistre une ligne complète dans cette table avant d'afficher les résultats.
+
+## 9. Intégrations
+
+**Bouton « Réserver ma consultation gratuite » (profils qualifiés) :**
+Lien de la forme `https://wa.me/33768674292?text=[message pré-rempli encodé]`.
+Le message pré-rempli reprend le profil de l'étudiant, par exemple :
+« Bonjour KPB Education 👋 Je viens de faire le test d'orientation et j'aimerais réserver ma consultation gratuite. Mon profil : [niveau_etudes], destination [destinations], rentrée [echeance], domaine [domaine]. »
+Remplace les crochets par les vraies réponses de l'utilisateur.
+(Si un lien de réservation dédié existe — Calendly ou autre — il peut remplacer le lien WhatsApp pour ce bouton : `[LIEN DE RÉSERVATION optionnel]`.)
+
+**Lien secondaire « Contacter l'équipe » (profils COLD, discret) :**
+Même format WhatsApp, message pré-rempli : « Bonjour KPB Education 👋 J'ai fait le test d'orientation et j'aimerais des informations sur les bourses et l'accompagnement. »
+
+**Bouton webinaire (profils COLD) :**
+Redirige vers `https://webinairebourse.lovable.app`.
+
+**Bouton de partage (tous profils) :**
+Utilise l'API Web Share pour partager le lien de l'app avec un message pré-rempli (voir §6). Repli : copier le lien + partage WhatsApp direct.
+
+## 10. Contraintes impératives
+
+- **Aucune garantie.** L'app ne doit JAMAIS promettre une admission ni un visa. Utiliser uniquement un langage de possibilité : « pistes », « opportunités que tu peux explorer », « maximiser tes chances ». Interdiction absolue des formules type « admission garantie » ou « visa garanti ».
+- **Chiffres réels uniquement.** Le seul chiffre de résultats autorisé est « +1 200 étudiants accompagnés » (et, si utilisé quelque part, « 87 % de réussite visa » présenté comme un historique, jamais comme une promesse). Ne pas inventer d'autres statistiques ni de faux témoignages.
+- **Performance.** L'app doit rester très légère et rapide sur connexion mobile lente.
+- **Langue.** Tout en français.

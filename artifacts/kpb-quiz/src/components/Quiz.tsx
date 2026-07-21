@@ -52,6 +52,7 @@ const DESTINATIONS = [
   { id: "USA", label: "🇺🇸 USA" },
   { id: "Dubaï", label: "🇦🇪 Dubaï" },
   { id: "Chine", label: "🇨🇳 Chine" },
+  { id: "Canada", label: "🇨🇦 Canada" },
   { id: "Je ne sais pas", label: "🤔 Je ne sais pas encore, aide-moi à choisir" }
 ];
 
@@ -101,7 +102,8 @@ const DEST_TEXTS: Record<string, string> = {
   "Royaume-Uni": "Diplômes reconnus globalement, programmes d'un an pour les masters. Frais plus élevés mais forte valeur sur le marché du travail.",
   "USA": "Système flexible avec community colleges accessibles et bourses partielles. Fort réseau alumni mondial.",
   "Dubaï": "Hub international en forte croissance. Programmes en anglais, aucun impôt sur le revenu, opportunités de stage.",
-  "Chine": "Bourses CSC (Chinese Scholarship Council) couvrant tout. Fort développement des programmes en anglais pour les étrangers."
+  "Chine": "Bourses CSC (Chinese Scholarship Council) couvrant tout. Fort développement des programmes en anglais pour les étrangers.",
+  "Canada": "Universités de rang mondial avec un accueil reconnu des étudiants internationaux. Passerelle vers l'immigration permanente et marché du travail dynamique."
 };
 
 const variants = {

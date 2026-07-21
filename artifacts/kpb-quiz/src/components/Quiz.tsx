@@ -17,6 +17,7 @@ interface QuizAnswers {
   oriente_vers?: string;
   prenom?: string;
   whatsapp?: string;
+  email?: string;
 }
 
 const DOMAINS = [
@@ -55,6 +56,14 @@ const DESTINATIONS = [
   { id: "Canada", label: "🇨🇦 Canada" },
   { id: "Je ne sais pas", label: "🤔 Je ne sais pas encore, aide-moi à choisir" }
 ];
+
+const BUDGET_DESTINATIONS: Record<string, string[]> = {
+  "gt_7000":    ["Canada", "USA", "Dubaï", "Allemagne", "France"],
+  "4000_7000":  ["Maroc", "Turquie"],
+  "2500_4000":  ["Maroc"],
+  "lt_2500":    [],           // COLD — no destination cards
+  "unknown":    [],           // A_QUALIFIER — use student's choices or default
+};
 
 const BUDGET_OPTIONS = [
   {
@@ -218,7 +227,7 @@ export default function Quiz() {
               className="w-full h-full flex flex-col absolute inset-0 overflow-y-auto pb-8"
             >
               {currentStep === 'home' && (
-                <Home 
+                <HomeScreen 
                   onStart={() => advance('q1')} 
                 />
               )}
@@ -275,12 +284,13 @@ export default function Quiz() {
                   onSubmit={async (val) => {
                     setIsSubmitting(true);
                     setSubmitError(null);
-                    const finalAnswers = { ...answers, ...val };
+                    const finalAnswers = { ...answers, prenom: val.prenom, whatsapp: val.whatsapp, email: val.email };
                     setAnswers(finalAnswers);
 
                     const lead = {
                       prenom: finalAnswers.prenom,
                       whatsapp: finalAnswers.whatsapp,
+                      email: finalAnswers.email,
                       niveau_etudes: finalAnswers.niveau_etudes,
                       echeance: finalAnswers.echeance,
                       destinations: (finalAnswers.destinations || []).join(", "),
@@ -316,30 +326,77 @@ export default function Quiz() {
 
 // --- Screens ---
 
-function Home({ onStart }: { onStart: () => void }) {
+function HomeScreen({ onStart }: { onStart: () => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center h-full">
-      <div className="flex items-center gap-3 text-primary mb-8 bg-secondary px-5 py-2.5 rounded-full">
-        <GraduationCap size={28} />
-        <span className="text-xl font-bold tracking-tight">KPB Education</span>
+    <div className="flex-1 flex flex-col min-h-[100dvh]">
+      {/* Top hero — primary blue */}
+      <div className="bg-primary flex flex-col items-center justify-center px-6 pt-14 pb-10 flex-[1.1]">
+        {/* Logo badge */}
+        <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 mb-8">
+          <GraduationCap className="text-white" size={20} />
+          <span className="text-white font-bold text-[0.95rem] tracking-wide">KPB Education</span>
+        </div>
+
+        <h1 className="text-white text-[2rem] leading-[1.15] font-extrabold text-center mb-4">
+          Découvre tes vraies opportunités pour étudier à l'étranger
+        </h1>
+        <p className="text-white/80 text-[1rem] text-center font-medium leading-relaxed max-w-[320px]">
+          Réponds à 6 questions et reçois des pistes concrètes et gratuites adaptées à ton profil.
+        </p>
+
+        {/* Country flags strip */}
+        <div className="flex items-center gap-3 mt-8 flex-wrap justify-center">
+          {["🇫🇷", "🇲🇦", "🇹🇷", "🇩🇪", "🇺🇸", "🇨🇦", "🇦🇪"].map(flag => (
+            <span key={flag} className="text-2xl drop-shadow-sm">{flag}</span>
+          ))}
+        </div>
       </div>
-      <h1 className="text-[1.8rem] leading-[1.15] font-extrabold text-primary mb-5">
-        Découvre en 2 minutes les vraies opportunités pour partir étudier à l'étranger
-      </h1>
-      <p className="text-muted-foreground mb-12 text-[1.05rem] leading-relaxed max-w-sm">
-        Réponds à quelques questions et reçois des pistes concrètes adaptées à ton profil. Gratuit.
-      </p>
-      <button 
-        onClick={onStart}
-        data-testid="button-start"
-        className="w-full bg-accent text-accent-foreground py-4 rounded-xl font-bold text-lg hover:bg-accent/90 transition-transform active:scale-[0.98] shadow-sm flex items-center justify-center gap-2"
-      >
-        Commencer le test →
-      </button>
-      <p className="mt-6 text-sm text-muted-foreground flex items-center justify-center gap-1.5 font-medium">
-        <Check size={16} className="text-green-600" /> 
-        Déjà +1 200 étudiants accompagnés par KPB Education
-      </p>
+
+      {/* Bottom section — white */}
+      <div className="bg-background flex flex-col items-center px-6 pt-8 pb-10 flex-1">
+        {/* 3 benefit icons */}
+        <div className="flex items-start justify-center gap-5 w-full max-w-[340px] mb-8">
+          {[
+            { icon: "⏱️", label: "2 minutes\nchrono" },
+            { icon: "🎯", label: "Pistes\npersonnalisées" },
+            { icon: "✅", label: "100%\ngratuit" },
+          ].map(b => (
+            <div key={b.label} className="flex flex-col items-center gap-1.5 flex-1 text-center">
+              <span className="text-2xl">{b.icon}</span>
+              <span className="text-[0.78rem] font-semibold text-muted-foreground whitespace-pre-line leading-tight">{b.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA button */}
+        <button
+          onClick={onStart}
+          data-testid="button-start"
+          className="w-full max-w-[360px] bg-accent text-accent-foreground py-4 rounded-2xl font-extrabold text-[1.15rem] shadow-lg hover:bg-accent/90 active:scale-[0.97] transition-all flex items-center justify-center gap-2 relative overflow-hidden"
+        >
+          <span className="relative z-10">Commencer le test →</span>
+        </button>
+
+        {/* Social proof */}
+        <div className="flex items-center gap-3 mt-5">
+          {/* Avatar stack */}
+          <div className="flex -space-x-2">
+            {[
+              { initials: "AM", bg: "bg-blue-500" },
+              { initials: "IB", bg: "bg-emerald-500" },
+              { initials: "FK", bg: "bg-violet-500" },
+              { initials: "SD", bg: "bg-orange-500" },
+            ].map(av => (
+              <div key={av.initials} className={`w-8 h-8 rounded-full ${av.bg} flex items-center justify-center text-white text-[0.65rem] font-bold ring-2 ring-background`}>
+                {av.initials}
+              </div>
+            ))}
+          </div>
+          <p className="text-[0.8rem] text-muted-foreground font-medium">
+            <span className="text-foreground font-bold">+1 200</span> étudiants accompagnés
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -577,14 +634,15 @@ function Q5({ answers, onSelect }: { answers: QuizAnswers, onSelect: (val: any) 
 
 function Contact({ answers, onSubmit, isSubmitting, submitError }: { 
   answers: QuizAnswers, 
-  onSubmit: (val: { prenom: string, whatsapp: string }) => void,
+  onSubmit: (val: { prenom: string, whatsapp: string, email: string }) => void,
   isSubmitting: boolean,
   submitError: string | null
 }) {
   const [prenom, setPrenom] = useState(answers.prenom || "");
   const [whatsapp, setWhatsapp] = useState(answers.whatsapp || "+227 ");
+  const [email, setEmail] = useState(answers.email || "");
 
-  const isValid = prenom.trim().length > 1 && whatsapp.trim().length > 6;
+  const isValid = prenom.trim().length > 1 && whatsapp.trim().length > 6 && email.trim().length > 3;
 
   return (
     <div className="flex-1 flex flex-col p-6">
@@ -602,6 +660,18 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
             onChange={e => setPrenom(e.target.value)}
             className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 text-[1.05rem] focus:outline-none focus:border-primary transition-colors font-medium"
             placeholder="Ex: Amina"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-foreground mb-2">Ton adresse email</label>
+          <input 
+            type="email"
+            data-testid="input-email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 text-[1.05rem] focus:outline-none focus:border-primary transition-colors font-medium"
+            placeholder="amina@example.com"
           />
         </div>
 
@@ -629,7 +699,7 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
 
         <div className="mt-auto pt-6 sticky bottom-6">
           <button 
-            onClick={() => isValid && !isSubmitting && onSubmit({ prenom, whatsapp })}
+            onClick={() => isValid && !isSubmitting && onSubmit({ prenom, whatsapp, email })}
             disabled={!isValid || isSubmitting}
             data-testid="button-submit"
             className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-sm flex items-center justify-center gap-2 ${
@@ -647,7 +717,7 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
           </button>
           
           <p className="mt-4 text-[0.85rem] text-muted-foreground text-center flex items-center justify-center gap-1.5 font-medium">
-            🔒 On t'écrit uniquement pour t'aider dans ton projet d'études.
+            🔒 On t'écrit uniquement pour t'aider dans ton projet d'études. Tu recevras le guide PDF offert.
           </p>
         </div>
       </div>
@@ -656,17 +726,27 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
 }
 
 function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () => void }) {
-  const [showCopied, setShowCopied] = useState(false);
+  const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
 
-  // Determine destinations to show
-  let toShow = answers.destinations || [];
-  if (toShow.includes("Je ne sais pas") || toShow.length === 0) {
-    toShow = ["France", "Maroc", "Turquie"];
+  // Budget filter logic
+  const budget = answers.budget_tranche || "unknown";
+  const eligible = BUDGET_DESTINATIONS[budget] || [];
+  let toShow: string[] = [];
+
+  if (budget === "lt_2500") {
+    // COLD — no destination cards at all
+    toShow = [];
+  } else if (budget === "unknown") {
+    // A_QUALIFIER — show student's selections, or default
+    const chosen = (answers.destinations || []).filter(d => d !== "Je ne sais pas");
+    toShow = chosen.length > 0 ? chosen.slice(0, 4) : ["France", "Maroc", "Turquie"];
+  } else {
+    // For all other budgets: intersection of eligible & chosen, fallback to eligible
+    const chosen = (answers.destinations || []).filter(d => d !== "Je ne sais pas");
+    const intersection = chosen.filter(d => eligible.includes(d));
+    toShow = (intersection.length > 0 ? intersection : eligible).slice(0, 4);
   }
-  // Max 4 cards
-  toShow = toShow.slice(0, 4);
 
-  // Extract flag and country name from options
   const getCountryInfo = (id: string) => {
     const opt = DESTINATIONS.find(d => d.id === id);
     if (!opt) return { flag: "🌍", name: id };
@@ -676,7 +756,30 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
 
   const domaineName = (answers.domaine || "ce domaine").replace(/^Autre: /, "");
 
-  const handleShare = () => {
+  // Profile label
+  const profileLabels: Record<string, string> = {
+    HOT: "Profil CHAUD 🔥",
+    WARM: "Profil SOLIDE 💪",
+    STANDARD: "Profil STANDARD ✅",
+    COLD: "Priorité bourses 🎓",
+    A_QUALIFIER: "À explorer 🔍",
+  };
+  const profileLabel = profileLabels[answers.statut || ""] || "Profil détecté";
+
+  // Country accent colors
+  const countryColors: Record<string, string> = {
+    France: "from-blue-700 to-blue-500",
+    Maroc: "from-red-700 to-red-500",
+    Turquie: "from-red-600 to-rose-400",
+    Allemagne: "from-gray-700 to-gray-500",
+    "Royaume-Uni": "from-blue-800 to-blue-600",
+    USA: "from-blue-600 to-indigo-500",
+    "Dubaï": "from-amber-600 to-yellow-500",
+    Chine: "from-red-700 to-red-500",
+    Canada: "from-red-600 to-red-400",
+  };
+
+  const handleShare = async () => {
     const shareData = {
       title: "Test d'orientation KPB Education",
       text: "Je viens de tester cet outil gratuit pour trouver des opportunités d'études à l'étranger 🎓 Teste-le toi aussi :",
@@ -685,86 +788,122 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
     if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
       navigator.share(shareData).catch(console.error);
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      setShowCopied(true);
-      setTimeout(() => setShowCopied(false), 2000);
+      await navigator.clipboard.writeText(window.location.href).catch(console.error);
+      setShareState('copied');
+      setTimeout(() => setShareState('idle'), 2500);
     }
   };
 
+  const waShareUrl = `https://wa.me/?text=${encodeURIComponent("Je viens de tester cet outil gratuit pour trouver des opportunités d'études à l'étranger 🎓 Teste-le toi aussi : " + window.location.href)}`;
+
   return (
-    <div className="flex-1 flex flex-col bg-background h-full">
-      {/* Banner */}
-      {answers.echeance === "Rentrée 2026" && (
-        <div className="bg-[#fff7ed] border-b border-[#fed7aa] text-[#c2410c] px-4 py-3 text-sm font-bold text-center">
-          ⏰ Les dates limites pour la rentrée 2026 approchent — ne tarde pas !
-        </div>
-      )}
+    <div className="flex-1 flex flex-col bg-background">
 
-      <div className="p-6 pb-20 space-y-8">
-        <h1 className="text-[1.75rem] leading-[1.2] font-extrabold text-primary">
-          <span className="capitalize">{answers.prenom}</span>, voici les pistes réelles pour toi 🎯
+      {/* Profile header — gradient */}
+      <div className="bg-gradient-to-br from-primary to-[hsl(221,83%,38%)] px-6 pt-8 pb-8 text-white">
+        {answers.echeance === "Rentrée 2026" && (
+          <div className="bg-white/20 rounded-xl px-4 py-2.5 mb-5 flex items-center gap-2 text-sm font-semibold">
+            ⏰ Les délais pour la rentrée 2026 approchent — ne tarde pas !
+          </div>
+        )}
+        <p className="text-white/70 text-sm font-semibold uppercase tracking-widest mb-1">{profileLabel}</p>
+        <h1 className="text-[2rem] font-extrabold leading-tight mb-3">
+          <span className="capitalize">{answers.prenom}</span>, voici tes pistes 🎯
         </h1>
+        <div className="flex flex-wrap gap-2">
+          {answers.niveau_etudes && (
+            <span className="bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">{answers.niveau_etudes}</span>
+          )}
+          {answers.domaine && (
+            <span className="bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">{domaineName}</span>
+          )}
+          {answers.echeance && (
+            <span className="bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">{answers.echeance}</span>
+          )}
+        </div>
+      </div>
 
-        {/* Destination Cards */}
-        <div className="space-y-4">
-          {toShow.map(dest => {
-            const info = getCountryInfo(dest);
-            let desc = DEST_TEXTS[dest] || `Excellentes opportunités en ${info.name}.`;
-            desc = desc.replace("{domaine}", domaineName);
+      <div className="p-5 pb-24 space-y-6">
 
-            return (
-              <div key={dest} className="bg-secondary/20 border border-secondary-border p-5 rounded-2xl flex gap-4">
-                <div className="text-3xl leading-none pt-1">{info.flag}</div>
+        {/* Destination cards */}
+        {toShow.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-[1rem] font-bold text-foreground">Destinations accessibles avec ton budget</h2>
+            {toShow.map(dest => {
+              const info = getCountryInfo(dest);
+              let desc = DEST_TEXTS[dest] || `Excellentes opportunités en ${info.name}.`;
+              desc = desc.replace("{domaine}", domaineName);
+              const gradient = countryColors[dest] || "from-primary to-[hsl(221,83%,40%)]";
+
+              return (
+                <div key={dest} className="rounded-2xl overflow-hidden border border-border shadow-sm">
+                  <div className={`bg-gradient-to-r ${gradient} px-4 py-3 flex items-center gap-3`}>
+                    <span className="text-3xl">{info.flag}</span>
+                    <div className="flex-1">
+                      <h3 className="text-white font-extrabold text-[1.1rem]">{info.name}</h3>
+                    </div>
+                    <span className="bg-white/20 text-white text-[0.7rem] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                      ✓ Accessible
+                    </span>
+                  </div>
+                  <div className="bg-white px-4 py-3">
+                    <p className="text-muted-foreground text-[0.9rem] leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* CTA section */}
+        <div className={`rounded-2xl p-5 space-y-4 ${answers.oriente_vers === 'webinaire' ? 'bg-amber-50 border border-amber-200' : 'bg-orange-50 border border-orange-200'}`}>
+          {answers.oriente_vers === "webinaire" ? (
+            <>
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">🎓</span>
                 <div>
-                  <h3 className="font-bold text-foreground text-[1.1rem] mb-1">{info.name}</h3>
-                  <p className="text-muted-foreground text-[0.95rem] leading-relaxed font-medium">
-                    {desc}
+                  <h3 className="font-extrabold text-foreground text-[1.05rem] mb-1">La bonne nouvelle : il existe des bourses</h3>
+                  <p className="text-muted-foreground text-[0.92rem] leading-relaxed">
+                    Des bourses peuvent couvrir une grande partie, voire la totalité, du coût de tes études à l'étranger. Découvre comment dans notre masterclass gratuite.
                   </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        <div className="h-px bg-border w-full my-6"></div>
-
-        {/* Action Section */}
-        <div className="space-y-5">
-          {answers.oriente_vers === "webinaire" ? (
-            <>
-              <p className="text-foreground text-[1.05rem] leading-relaxed font-medium">
-                Il existe des bourses qui peuvent alléger fortement, voire couvrir, le coût de tes études à l'étranger. La meilleure première étape pour toi : notre masterclass gratuite sur les bourses.
-              </p>
-              <a 
+              <a
                 href="https://webinairebourse.lovable.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="button-webinar-cta"
-                className="w-full bg-accent text-accent-foreground py-4 rounded-xl font-bold text-[1.05rem] hover:bg-accent/90 transition-transform active:scale-[0.98] shadow-sm flex items-center justify-center text-center px-4"
+                className="w-full bg-accent text-accent-foreground py-4 rounded-xl font-bold text-[1.05rem] hover:bg-accent/90 transition-all active:scale-[0.98] shadow-sm flex items-center justify-center text-center gap-2"
               >
                 🎓 Accéder à la masterclass gratuite
               </a>
-              <a 
+              <a
                 href={`https://wa.me/33768674292?text=${encodeURIComponent("Bonjour KPB Education 👋 J'ai fait le test d'orientation et j'aimerais des informations sur les bourses et l'accompagnement.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="link-contact-team"
-                className="block text-center text-primary font-semibold text-[0.95rem] underline underline-offset-4 hover:text-primary/80"
+                className="block text-center text-primary font-semibold text-[0.9rem] underline underline-offset-4"
               >
-                Tu préfères parler à quelqu'un ? Contacte l'équipe
+                Parler directement à un conseiller →
               </a>
             </>
           ) : (
             <>
-              <p className="text-foreground text-[1.05rem] leading-relaxed font-medium">
-                Ton profil correspond aux programmes que KPB Education accompagne. Un conseiller peut étudier ton dossier avec toi et t'aider à monter ta candidature.
-              </p>
-              <a 
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">📅</span>
+                <div>
+                  <h3 className="font-extrabold text-foreground text-[1.05rem] mb-1">Réserve ta consultation gratuite</h3>
+                  <p className="text-muted-foreground text-[0.92rem] leading-relaxed">
+                    Ton profil correspond aux programmes que KPB Education accompagne. Un conseiller peut étudier ton dossier avec toi et t'aider à monter ta candidature.
+                  </p>
+                </div>
+              </div>
+              <a
                 href={`https://wa.me/33768674292?text=${encodeURIComponent(`Bonjour KPB Education 👋 Je viens de faire le test d'orientation et j'aimerais réserver ma consultation gratuite. Mon profil : ${answers.niveau_etudes}, destination ${(answers.destinations || []).join(", ")}, rentrée ${answers.echeance}, domaine ${answers.domaine}.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="button-whatsapp-cta"
-                className="w-full bg-accent text-accent-foreground py-4 rounded-xl font-bold text-[1.05rem] hover:bg-accent/90 transition-transform active:scale-[0.98] shadow-sm flex items-center justify-center text-center px-4"
+                className="w-full bg-accent text-accent-foreground py-4 rounded-xl font-bold text-[1.05rem] hover:bg-accent/90 transition-all active:scale-[0.98] shadow-sm flex items-center justify-center text-center gap-2"
               >
                 📅 Réserver ma consultation gratuite
               </a>
@@ -772,29 +911,37 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
           )}
         </div>
 
-        <div className="h-px bg-border w-full my-6"></div>
-
-        {/* Share Section */}
-        <div className="bg-muted/50 p-6 rounded-2xl text-center space-y-4">
-          <h4 className="font-bold text-foreground">Tes amis aussi peuvent trouver leur voie</h4>
-          
+        {/* Share section — always expanded */}
+        <div className="bg-muted rounded-2xl p-5 space-y-3">
+          <div className="text-center">
+            <h4 className="font-bold text-foreground text-[1rem] mb-1">Tes amis aussi peuvent trouver leur voie 🚀</h4>
+            <p className="text-muted-foreground text-[0.85rem]">Partage cet outil gratuit avec tes amis qui veulent étudier à l'étranger.</p>
+          </div>
           <button
             onClick={handleShare}
             data-testid="button-share"
             className="w-full bg-background border-2 border-border text-foreground py-3.5 rounded-xl font-bold text-[0.95rem] hover:bg-secondary/20 transition-colors flex items-center justify-center gap-2"
           >
-            {showCopied ? (
+            {shareState === 'copied' ? (
               <><Check size={18} className="text-green-600" /> Lien copié !</>
             ) : (
-              <><Share2 size={18} /> Partager cet outil</>
+              <><Share2 size={18} /> Partager l'outil</>
             )}
           </button>
+          <a
+            href={waShareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-[#25D366] text-white py-3.5 rounded-xl font-bold text-[0.95rem] hover:bg-[#22bf5b] transition-colors flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">💬</span> Partager sur WhatsApp
+          </a>
         </div>
 
-        <button 
+        <button
           onClick={onRestart}
           data-testid="button-restart"
-          className="w-full text-center text-muted-foreground font-semibold text-sm underline underline-offset-4 hover:text-foreground mt-8"
+          className="w-full text-center text-muted-foreground font-semibold text-sm underline underline-offset-4 hover:text-foreground"
         >
           Recommencer le test
         </button>

@@ -290,7 +290,9 @@ export default function Quiz() {
                       oriente_vers: finalAnswers.oriente_vers,
                     };
 
-                    const { error } = await supabase.from('leads').insert([lead]);
+                    const { error } = await supabase
+                      .from('leads')
+                      .upsert([lead], { onConflict: 'whatsapp' });
 
                     setIsSubmitting(false);
                     if (error) {

@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/dashboard/"
+title = "KPB Dashboard - Leads"
+version = "1.0.0"
+id = "artifacts/kpb-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/dashboard/" ]
+localPort = 19163
+
+[services.development]
+run = "pnpm --filter @workspace/kpb-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/kpb-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/kpb-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19163"
+BASE_PATH = "/dashboard/"

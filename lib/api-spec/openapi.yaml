@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: leads
+    description: Leads management
 paths:
   /healthz:
     get:
@@ -24,7 +28,94 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/verify:
+    post:
+      operationId: verifyPassword
+      tags: [auth]
+      summary: Verify dashboard password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordInput"
+      responses:
+        "200":
+          description: Password verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "401":
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads:
+    get:
+      operationId: listLeads
+      tags: [leads]
+      summary: List all leads
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: statut
+          in: query
+          schema:
+            type: string
+        - name: destination
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lead"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/stats:
+    get:
+      operationId: getLeadsStats
+      tags: [leads]
+      summary: Get leads statistics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lead statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadsStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +125,89 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    PasswordInput:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
+
+    AuthResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+      required:
+        - success
+        - token
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: ["string", "null"]
+        prenom:
+          type: ["string", "null"]
+        whatsapp:
+          type: ["string", "null"]
+        niveau_etudes:
+          type: ["string", "null"]
+        echeance:
+          type: ["string", "null"]
+        destinations:
+          type: ["string", "null"]
+        domaine:
+          type: ["string", "null"]
+        budget_tranche:
+          type: ["string", "null"]
+        statut:
+          type: ["string", "null"]
+        oriente_vers:
+          type: ["string", "null"]
+        created_at:
+          type: ["string", "null"]
+      required:
+        - id
+
+    StatusCount:
+      type: object
+      properties:
+        statut:
+          type: string
+        count:
+          type: integer
+      required:
+        - statut
+        - count
+
+    LeadsStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        by_status:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        by_destination:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        recent_count:
+          type: integer
+      required:
+        - total
+        - by_status
+        - by_destination
+        - recent_count

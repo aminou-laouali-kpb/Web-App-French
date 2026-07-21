@@ -41,12 +41,13 @@ function requireAuth(req: Request, res: Response, next: NextFunction): void {
 router.get("/leads", requireAuth, async (req, res): Promise<void> => {
   try {
     const supabase = getSupabaseAdmin();
+    const { statut, destination, search, sort } = req.query as Record<string, string>;
+
+    const sortColumn = sort === "updated_at" ? "updated_at" : "created_at";
     let query = supabase
       .from("leads")
       .select("*")
-      .order("created_at", { ascending: false });
-
-    const { statut, destination, search } = req.query as Record<string, string>;
+      .order(sortColumn, { ascending: false });
 
     if (statut) {
       query = query.eq("statut", statut);

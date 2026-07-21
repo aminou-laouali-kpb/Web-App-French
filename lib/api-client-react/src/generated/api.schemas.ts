@@ -45,6 +45,8 @@ export interface Lead {
   oriente_vers?: string | null;
   /** @nullable */
   created_at?: string | null;
+  /** @nullable */
+  updated_at?: string | null;
 }
 
 export interface StatusCount {
@@ -63,5 +65,6 @@ export type ListLeadsParams = {
 statut?: string;
 destination?: string;
 search?: string;
+sort?: 'created_at' | 'updated_at';
 };
 

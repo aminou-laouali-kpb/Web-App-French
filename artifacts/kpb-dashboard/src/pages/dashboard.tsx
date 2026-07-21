@@ -9,9 +9,9 @@ import { Select } from "@/components/ui/select";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, formatDistanceToNow, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
-import { LogOut, Download, Search, Users, Flame, Clock, RefreshCw, Loader2, AlertCircle } from "lucide-react";
+import { LogOut, Download, Search, Users, Flame, Clock, RefreshCw, Loader2, AlertCircle, ArrowUpDown, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DESTINATIONS = ["Tous", "France", "Maroc", "Turquie", "Allemagne", "Royaume-Uni", "USA", "Dubaï", "Chine", "Canada"];
@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tous");
   const [destinationFilter, setDestinationFilter] = useState("Tous");
+  const [sortBy, setSortBy] = useState<"created_at" | "updated_at">("created_at");
 
   // Protect route
   useEffect(() => {
@@ -46,8 +47,9 @@ export default function Dashboard() {
     if (debouncedSearch) p.search = debouncedSearch;
     if (statusFilter !== "Tous") p.statut = statusFilter;
     if (destinationFilter !== "Tous") p.destination = destinationFilter;
+    p.sort = sortBy;
     return p;
-  }, [debouncedSearch, statusFilter, destinationFilter]);
+  }, [debouncedSearch, statusFilter, destinationFilter, sortBy]);
 
   // Fetch data with 30-second polling for real-time updates
   const { 
@@ -99,9 +101,10 @@ export default function Dashboard() {
   const exportCSV = () => {
     if (!leads.length) return;
     
-    const headers = ["Date", "Prénom", "WhatsApp", "Niveau", "Échéance", "Destinations", "Domaine", "Budget", "Statut", "Orienté vers"];
+    const headers = ["Date entrée", "Dernière activité", "Prénom", "WhatsApp", "Niveau", "Échéance", "Destinations", "Domaine", "Budget", "Statut", "Orienté vers"];
     const rows = leads.map(l => [
       l.created_at ? format(new Date(l.created_at), "dd/MM/yyyy HH:mm") : "",
+      l.updated_at ? format(new Date(l.updated_at), "dd/MM/yyyy HH:mm") : "",
       l.prenom || "",
       l.whatsapp || "",
       l.niveau_etudes || "",
@@ -230,7 +233,7 @@ export default function Dashboard() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Select 
                   value={statusFilter} 
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -245,6 +248,15 @@ export default function Dashboard() {
                 >
                   {DESTINATIONS.map(d => <option key={d} value={d}>{d === "Tous" ? "Toutes dest." : d}</option>)}
                 </Select>
+                <Button
+                  variant={sortBy === "updated_at" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSortBy(prev => prev === "updated_at" ? "created_at" : "updated_at")}
+                  title={sortBy === "updated_at" ? "Tri : dernière activité" : "Tri : date d'entrée"}
+                >
+                  <ArrowUpDown className="w-4 h-4 mr-1.5" />
+                  {sortBy === "updated_at" ? "Activité récente" : "Date d'entrée"}
+                </Button>
               </div>
             </div>
             
@@ -280,7 +292,8 @@ export default function Dashboard() {
               <Table>
                 <TableHeader className="bg-gray-50/80">
                   <TableRow>
-                    <TableHead className="w-[100px]">Date</TableHead>
+                    <TableHead className="w-[110px]">Entrée</TableHead>
+                    <TableHead className="w-[130px]">Dernière activité</TableHead>
                     <TableHead>Prénom</TableHead>
                     <TableHead>WhatsApp</TableHead>
                     <TableHead className="hidden md:table-cell">Niveau</TableHead>
@@ -291,10 +304,22 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.map((lead) => (
+                  {leads.map((lead) => {
+                    const isReturned = lead.updated_at && lead.created_at &&
+                      differenceInMinutes(new Date(lead.updated_at), new Date(lead.created_at)) > 5;
+                    return (
                     <TableRow key={lead.id} className="hover:bg-blue-50/30">
                       <TableCell className="font-medium text-xs text-muted-foreground whitespace-nowrap">
                         {lead.created_at ? format(new Date(lead.created_at), "dd MMM yyyy", { locale: fr }) : "-"}
+                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {lead.updated_at ? (
+                          <span className={`inline-flex items-center gap-1 ${isReturned ? "text-emerald-700 font-semibold" : "text-muted-foreground"}`}
+                            title={format(new Date(lead.updated_at), "dd/MM/yyyy HH:mm")}>
+                            {isReturned && <RotateCcw className="w-3 h-3 flex-shrink-0" />}
+                            {formatDistanceToNow(new Date(lead.updated_at), { locale: fr, addSuffix: true })}
+                          </span>
+                        ) : "-"}
                       </TableCell>
                       <TableCell className="font-semibold">{lead.prenom || "-"}</TableCell>
                       <TableCell className="text-sm">{lead.whatsapp || "-"}</TableCell>
@@ -316,7 +341,8 @@ export default function Dashboard() {
                         </span>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}

@@ -1,36 +1,41 @@
-# [Project name]
+# KPB Education — Test d'orientation
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Application mobile-first en français pour KPB Education. Les étudiants nigériens répondent à 6 questions sur leur projet d'études à l'étranger, reçoivent des pistes personnalisées, et sont orientés vers WhatsApp (profils qualifiés) ou un webinaire bourses (petits budgets).
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/kpb-quiz run dev` — run the quiz frontend
+- `pnpm --filter @workspace/api-server run dev` — run the API server (not used by the quiz, shared infra)
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React + Vite + Tailwind CSS (artifacts/kpb-quiz)
+- Database: Supabase (project: KPB, id: hijzqsljasbobjrjotjy, region: eu-west-3)
+- Fonts: Montserrat (Google Fonts)
+- Animation: Framer Motion
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/kpb-quiz/src/components/Quiz.tsx` — entire quiz flow (all 8 screens)
+- `artifacts/kpb-quiz/src/lib/supabase.ts` — Supabase client
+- `artifacts/kpb-quiz/src/index.css` — KPB theme (colors, fonts)
+- Supabase table: `leads` (prenom, whatsapp, niveau_etudes, echeance, destinations, domaine, budget_tranche, statut, oriente_vers)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Single-component quiz (no routing): all state in Quiz.tsx, screens rendered conditionally — keeps the bundle tiny and transitions simple.
+- Direct Supabase write from the frontend: no API server needed for this app, anon key with RLS (insert-only policy for anon role).
+- Lead qualification computed client-side before Supabase insert: budget_tranche → statut (HOT/WARM/STANDARD/COLD/A_QUALIFIER) → oriente_vers (whatsapp/webinaire).
+- Framer Motion for screen transitions: slide from right (forward), slide from left (back), 200ms.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Accueil**: headline + "Commencer le test" CTA + social proof (+1 200 étudiants)
+- **6 écrans de questions**: niveau, échéance, destination (multi-select), domaine (combobox filtrable), budget (FCFA + €), capture contact (prénom + WhatsApp)
+- **Résultats**: pistes personnalisées par destination, encart urgence si rentrée 2026, CTA WhatsApp ou webinaire selon budget, bouton de partage natif (Web Share API)
 
 ## User preferences
 
@@ -38,7 +43,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Supabase anon key is stored as env var (not secret) — it's a publishable key with insert-only RLS.
+- `@import url(...)` for Google Fonts MUST be the first line of index.css, before `@import "tailwindcss"`.
+- WhatsApp CTA number: +33768674292. Webinar link: https://webinairebourse.lovable.app
+- Never use "garanti", "admission garantie", "visa garanti" in any copy.
 
 ## Pointers
 

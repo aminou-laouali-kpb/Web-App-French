@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "KPB Education - Orientation Quiz"
+version = "1.0.0"
+id = "artifacts/kpb-quiz"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20534
+
+[services.development]
+run = "pnpm --filter @workspace/kpb-quiz run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/kpb-quiz", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/kpb-quiz/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20534"
+BASE_PATH = "/"

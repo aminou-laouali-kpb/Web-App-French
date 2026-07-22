@@ -13,6 +13,7 @@ import { format, formatDistanceToNow, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { LogOut, Download, Search, Users, Flame, Clock, RefreshCw, Loader2, AlertCircle, ArrowUpDown, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { LeadDetailSheet } from "@/components/lead-detail-sheet";
 
 const DESTINATIONS = ["Tous", "France", "Maroc", "Turquie", "Allemagne", "Royaume-Uni", "USA", "Dubaï", "Chine", "Canada"];
 const STATUSES = ["Tous", "HOT", "WARM", "STANDARD", "COLD", "A_QUALIFIER"];
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState("Tous");
   const [destinationFilter, setDestinationFilter] = useState("Tous");
   const [sortBy, setSortBy] = useState<"created_at" | "updated_at">("created_at");
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   // Protect route
   useEffect(() => {
@@ -308,7 +310,11 @@ export default function Dashboard() {
                     const isReturned = lead.updated_at && lead.created_at &&
                       differenceInMinutes(new Date(lead.updated_at), new Date(lead.created_at)) > 5;
                     return (
-                    <TableRow key={lead.id} className="hover:bg-blue-50/30">
+                    <TableRow
+                      key={lead.id}
+                      className="hover:bg-blue-50/50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedLeadId(lead.id ?? null)}
+                    >
                       <TableCell className="font-medium text-xs text-muted-foreground whitespace-nowrap">
                         {lead.created_at ? format(new Date(lead.created_at), "dd MMM yyyy", { locale: fr }) : "-"}
                       </TableCell>
@@ -349,6 +355,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </main>
+
+      <LeadDetailSheet
+        leadId={selectedLeadId}
+        onClose={() => setSelectedLeadId(null)}
+      />
     </div>
   );
 }

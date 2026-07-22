@@ -132,4 +132,32 @@ router.get("/leads/stats", requireAuth, async (req, res): Promise<void> => {
   }
 });
 
+router.get("/leads/:id", requireAuth, async (req, res): Promise<void> => {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        res.status(404).json({ error: "Lead not found" });
+        return;
+      }
+      req.log.error({ error }, "Supabase error fetching lead");
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json(data);
+  } catch (err) {
+    req.log.error({ err }, "Error fetching lead");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

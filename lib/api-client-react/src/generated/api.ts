@@ -289,6 +289,49 @@ export function useListLeads<TData = Awaited<ReturnType<typeof listLeads>>, TErr
 
 
 
+export const getGetLeadUrl = (id: string) => {
+  return `/api/leads/${id}`
+}
+
+/**
+ * @summary Get a single lead by ID
+ */
+export const getLead = async (id: string, options?: RequestInit): Promise<Lead> => {
+  return customFetch<Lead>(getGetLeadUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+}
+
+export const getGetLeadQueryKey = (id: string) => {
+  return [`/api/leads/${id}`] as const;
+}
+
+export const getGetLeadQueryOptions = <TData = Awaited<ReturnType<typeof getLead>>, TError = ErrorType<ErrorResponse>>(
+  id: string,
+  options?: { query?: UseQueryOptions<Awaited<ReturnType<typeof getLead>>, TError, TData>, request?: SecondParameter<typeof customFetch> }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetLeadQueryKey(id);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLead>>> = ({ signal }) => getLead(id, { signal, ...requestOptions });
+  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<Awaited<ReturnType<typeof getLead>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeadQueryResult = NonNullable<Awaited<ReturnType<typeof getLead>>>
+export type GetLeadQueryError = ErrorType<ErrorResponse>
+
+/**
+ * @summary Get a single lead by ID
+ */
+export function useGetLead<TData = Awaited<ReturnType<typeof getLead>>, TError = ErrorType<ErrorResponse>>(
+  id: string,
+  options?: { query?: UseQueryOptions<Awaited<ReturnType<typeof getLead>>, TError, TData>, request?: SecondParameter<typeof customFetch> }
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLeadQueryOptions(id, options)
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getGetLeadsStatsUrl = () => {
 
 

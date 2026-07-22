@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION public.trigger_send_guide_email()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, net
 AS $$
 DECLARE
   _secret   text := current_setting('app.trigger_secret', true);
@@ -26,7 +26,7 @@ DECLARE
 BEGIN
   -- Only fire when the lead provided an email address
   IF NEW.email IS NOT NULL AND NEW.email <> '' THEN
-    PERFORM extensions.net.http_post(
+    PERFORM net.http_post(
       url     := _base_url || '/functions/v1/send-guide-email',
       headers := jsonb_build_object(
         'Content-Type',    'application/json',

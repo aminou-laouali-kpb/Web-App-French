@@ -319,6 +319,19 @@ export default function Quiz() {
                       setSubmitError("Une erreur s'est produite lors de la soumission. Veuillez réessayer.");
                     } else {
                       advance('results');
+                      // Envoyer les données du lead aux webhooks n8n (sans bloquer l'affichage)
+                      const webhookUrls = [
+                        'https://n8n.kpbeducation.cloud/webhook-test/afcd381b-f3ad-4781-a629-28c1ad23086e',
+                        'https://n8n.kpbeducation.cloud/webhook/afcd381b-f3ad-4781-a629-28c1ad23086e',
+                      ];
+                      const payload = JSON.stringify(lead);
+                      webhookUrls.forEach((url) => {
+                        fetch(url, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: payload,
+                        }).catch((err) => console.error('[webhook] Erreur envoi', url, err));
+                      });
                     }
                   }} 
                 />

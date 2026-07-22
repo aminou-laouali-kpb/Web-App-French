@@ -173,11 +173,11 @@ export default function Quiz() {
 
   return (
     <div className="min-h-[100dvh] w-full flex justify-center bg-muted overflow-x-hidden font-sans text-foreground">
-      <div className="w-full max-w-[480px] bg-background shadow-lg relative flex flex-col overflow-hidden">
+      <div className="w-full max-w-[480px] min-h-[100dvh] bg-background shadow-lg relative flex flex-col overflow-x-hidden">
         
         {/* Header (Back + Progress) */}
         {currentStep !== 'home' && currentStep !== 'results' && (
-          <div className="pt-6 pb-2 px-6 flex flex-col gap-4 relative z-10 bg-background">
+          <div className="pt-6 pb-2 px-6 flex flex-col gap-4 relative z-10 bg-background shrink-0">
             <button 
               onClick={goBack} 
               className="text-muted-foreground hover:text-foreground w-fit p-1 -ml-1 transition-colors"
@@ -214,7 +214,7 @@ export default function Quiz() {
         </AnimatePresence>
 
         {/* Screens */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-h-0">
           <AnimatePresence initial={false} custom={direction} mode="popLayout">
             <motion.div
               key={currentStep}
@@ -224,7 +224,7 @@ export default function Quiz() {
               animate="center"
               exit="exit"
               transition={{ type: "tween", duration: 0.25, ease: "easeInOut" }}
-              className="w-full h-full flex flex-col absolute inset-0 overflow-y-auto pb-8"
+              className="w-full h-full flex flex-col absolute inset-0 overflow-y-auto overflow-x-hidden pb-8"
             >
               {currentStep === 'home' && (
                 <HomeScreen 
@@ -300,12 +300,43 @@ export default function Quiz() {
                       oriente_vers: finalAnswers.oriente_vers,
                     };
 
-                    const { error } = await supabase
-                      .from('leads')
-                      .upsert([lead], { onConflict: 'whatsapp' });
+                    // Prefer SECURITY DEFINER RPC (safe upsert). Fall back to insert
+                    // if the migration has not been applied yet.
+                    let submitFailed = false;
+                    const { error: rpcError } = await supabase.rpc('upsert_quiz_lead', {
+                      p_prenom: lead.prenom,
+                      p_whatsapp: lead.whatsapp,
+                      p_email: lead.email,
+                      p_niveau_etudes: lead.niveau_etudes,
+                      p_echeance: lead.echeance,
+                      p_destinations: lead.destinations,
+                      p_domaine: lead.domaine,
+                      p_budget_tranche: lead.budget_tranche,
+                      p_statut: lead.statut,
+                      p_oriente_vers: lead.oriente_vers,
+                    });
+
+                    if (rpcError) {
+                      console.error('[KPB Quiz] upsert_quiz_lead RPC failed', {
+                        code: rpcError.code,
+                        message: rpcError.message,
+                        details: rpcError.details,
+                        hint: rpcError.hint,
+                      });
+                      const { error: insertError } = await supabase.from('leads').insert([lead]);
+                      if (insertError) {
+                        console.error('[KPB Quiz] lead insert fallback failed', {
+                          code: insertError.code,
+                          message: insertError.message,
+                          details: insertError.details,
+                          hint: insertError.hint,
+                        });
+                        submitFailed = true;
+                      }
+                    }
 
                     setIsSubmitting(false);
-                    if (error) {
+                    if (submitFailed) {
                       setSubmitError("Une erreur s'est produite lors de la soumission. Veuillez réessayer.");
                     } else {
                       advance('results');
@@ -475,7 +506,7 @@ function Q3({ answers, onSelect }: { answers: QuizAnswers, onSelect: (val: strin
         <p className="text-sm text-muted-foreground font-medium">Tu peux choisir plusieurs pays.</p>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-2 gap-3 mb-8 items-stretch">
         {DESTINATIONS.map(opt => {
           const isSelected = selected.includes(opt.id);
           const isIDK = opt.id === "Je ne sais pas";
@@ -483,14 +514,14 @@ function Q3({ answers, onSelect }: { answers: QuizAnswers, onSelect: (val: strin
             <button 
               key={opt.id}
               onClick={() => toggle(opt.id)}
-              className={`p-4 border-2 rounded-xl text-left font-semibold text-foreground transition-all flex flex-col gap-2 active:scale-[0.98] ${
+              className={`min-h-[3.5rem] h-full p-4 border-2 rounded-xl text-left font-semibold text-foreground transition-all flex items-center active:scale-[0.98] ${
                 isIDK ? 'col-span-2 mt-2' : ''
               } ${
                 isSelected ? 'border-primary bg-secondary/30 ring-1 ring-primary/20' : 'border-border hover:border-primary/50 hover:bg-secondary/10'
               }`}
             >
-              <div className="flex justify-between items-start w-full">
-                <span className="text-[1.05rem]">{opt.label}</span>
+              <div className="flex justify-between items-center gap-2 w-full">
+                <span className="text-[1.05rem] leading-snug">{opt.label}</span>
                 {isSelected && <Check className="text-primary flex-shrink-0" size={18} />}
               </div>
             </button>
@@ -646,8 +677,8 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
 
   return (
     <div className="flex-1 flex flex-col p-6">
-      <h2 className="text-[1.75rem] leading-[1.2] font-extrabold text-primary mb-8">
-        Presque fini ! Où doit-on t'envoyer tes résultats et tes pistes ? 🎯
+      <h2 className="text-[1.5rem] sm:text-[1.75rem] leading-[1.25] font-extrabold text-primary mb-6 shrink-0">
+        Presque fini ! Où doit-on t&apos;envoyer tes résultats et tes pistes ? 🎯
       </h2>
 
       <div className="flex flex-col gap-5 flex-1">

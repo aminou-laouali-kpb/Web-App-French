@@ -642,6 +642,30 @@ function Q5({ answers, onSelect }: { answers: QuizAnswers, onSelect: (val: any) 
   );
 }
 
+/**
+ * Normalize a WhatsApp number to E.164 format.
+ * Strips spaces, dashes, and dots; keeps the leading +.
+ * Examples:
+ *   "+227 78 09 89 14" → "+22778098914"
+ *   "+227-78-09-89-14" → "+22778098914"
+ */
+function normalizeWhatsApp(raw: string): string {
+  return raw.replace(/[\s\-\.]/g, '');
+}
+
+/**
+ * Validate a WhatsApp number.
+ * Accepts any E.164 number: + followed by 7–15 digits, first digit non-zero.
+ * Returns null if valid, or a French error message if invalid.
+ */
+function validateWhatsApp(raw: string): string | null {
+  const cleaned = normalizeWhatsApp(raw);
+  if (!/^\+[1-9][0-9]{6,14}$/.test(cleaned)) {
+    return "Numéro invalide. Commence par l'indicatif pays (ex: +227 78 09 89 14 pour le Niger, +33 6 12 34 56 78 pour la France).";
+  }
+  return null;
+}
+
 function Contact({ answers, onSubmit, isSubmitting, submitError }: { 
   answers: QuizAnswers, 
   onSubmit: (val: { prenom: string, whatsapp: string, email: string }) => void,
@@ -651,8 +675,18 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
   const [prenom, setPrenom] = useState(answers.prenom || "");
   const [whatsapp, setWhatsapp] = useState(answers.whatsapp || "+227 ");
   const [email, setEmail] = useState(answers.email || "");
+  const [whatsappTouched, setWhatsappTouched] = useState(false);
 
-  const isValid = prenom.trim().length > 1 && whatsapp.trim().length > 6 && email.trim().length > 3;
+  const whatsappError = whatsappTouched ? validateWhatsApp(whatsapp) : null;
+  const isValid = prenom.trim().length > 1 
+    && validateWhatsApp(whatsapp) === null 
+    && email.trim().length > 3;
+
+  const handleSubmit = () => {
+    if (!isValid || isSubmitting) return;
+    const normalized = normalizeWhatsApp(whatsapp);
+    onSubmit({ prenom, whatsapp: normalized, email });
+  };
 
   return (
     <div className="flex-1 flex flex-col p-6">
@@ -689,16 +723,30 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
           <label className="block text-sm font-bold text-foreground mb-2">Ton numéro WhatsApp</label>
           <div className="relative">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
-              🇳🇪
+              📱
             </div>
             <input 
               type="tel"
               data-testid="input-whatsapp"
               value={whatsapp}
               onChange={e => setWhatsapp(e.target.value)}
-              className="w-full bg-background border-2 border-border rounded-xl pl-12 pr-4 py-3.5 text-[1.05rem] focus:outline-none focus:border-primary transition-colors font-medium"
+              onBlur={() => setWhatsappTouched(true)}
+              className={`w-full bg-background border-2 rounded-xl pl-12 pr-4 py-3.5 text-[1.05rem] focus:outline-none transition-colors font-medium ${
+                whatsappError
+                  ? 'border-destructive focus:border-destructive'
+                  : 'border-border focus:border-primary'
+              }`}
+              placeholder="+227 78 09 89 14"
             />
           </div>
+          {whatsappError && (
+            <p className="mt-1.5 text-destructive text-[0.82rem] font-medium">{whatsappError}</p>
+          )}
+          {!whatsappError && whatsappTouched && validateWhatsApp(whatsapp) === null && (
+            <p className="mt-1.5 text-green-600 text-[0.82rem] font-medium flex items-center gap-1">
+              <Check size={13} /> Numéro valide
+            </p>
+          )}
         </div>
 
         {submitError && (
@@ -709,7 +757,7 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
 
         <div className="mt-auto pt-6 sticky bottom-6">
           <button 
-            onClick={() => isValid && !isSubmitting && onSubmit({ prenom, whatsapp, email })}
+            onClick={handleSubmit}
             disabled={!isValid || isSubmitting}
             data-testid="button-submit"
             className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-sm flex items-center justify-center gap-2 ${

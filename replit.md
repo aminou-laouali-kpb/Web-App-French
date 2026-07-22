@@ -44,6 +44,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - Supabase anon key is stored as env var (not secret) — it's a publishable key with insert-only RLS.
+- **Lead submission requires the migration `20260722220000_leads_restore_anon_insert.sql` applied** (anon INSERT policy + `upsert_quiz_lead` RPC). Without it, the quiz shows « Une erreur s'est produite lors de la soumission ».
+- Do NOT grant anon blanket SELECT/UPDATE on `leads` — use the SECURITY DEFINER RPC for upserts.
 - `@import url(...)` for Google Fonts MUST be the first line of index.css, before `@import "tailwindcss"`.
 - WhatsApp CTA number: +33768674292. Webinar link: https://webinairebourse.lovable.app
 - Never use "garanti", "admission garantie", "visa garanti" in any copy.

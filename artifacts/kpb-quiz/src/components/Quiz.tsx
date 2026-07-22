@@ -300,12 +300,22 @@ export default function Quiz() {
                       oriente_vers: finalAnswers.oriente_vers,
                     };
 
-                    const { error } = await supabase
-                      .from('leads')
-                      .upsert([lead], { onConflict: 'whatsapp' });
+                    const { error } = await supabase.rpc('submit_lead', {
+                      p_prenom: lead.prenom,
+                      p_whatsapp: lead.whatsapp,
+                      p_email: lead.email,
+                      p_niveau_etudes: lead.niveau_etudes,
+                      p_echeance: lead.echeance,
+                      p_destinations: lead.destinations,
+                      p_domaine: lead.domaine,
+                      p_budget_tranche: lead.budget_tranche,
+                      p_statut: lead.statut,
+                      p_oriente_vers: lead.oriente_vers,
+                    });
 
                     setIsSubmitting(false);
                     if (error) {
+                      console.error('[submit_lead] Supabase error:', error.code, error.message, error.details);
                       setSubmitError("Une erreur s'est produite lors de la soumission. Veuillez réessayer.");
                     } else {
                       advance('results');

@@ -1,7 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { GraduationCap, ArrowLeft, Check, Search, Share2, Copy } from 'lucide-react';
+import { GraduationCap, ArrowLeft, Check, Search, Share2, Copy, ChevronDown } from 'lucide-react';
+
+// ─── Liste des pays et indicatifs ──────────────────────────────────────────
+const COUNTRY_CODES = [
+  { code: '+227', flag: '🇳🇪', name: 'Niger' },
+  { code: '+229', flag: '🇧🇯', name: 'Bénin' },
+  { code: '+226', flag: '🇧🇫', name: 'Burkina Faso' },
+  { code: '+225', flag: '🇨🇮', name: "Côte d'Ivoire" },
+  { code: '+223', flag: '🇲🇱', name: 'Mali' },
+  { code: '+221', flag: '🇸🇳', name: 'Sénégal' },
+  { code: '+228', flag: '🇹🇬', name: 'Togo' },
+  { code: '+224', flag: '🇬🇳', name: 'Guinée' },
+  { code: '+222', flag: '🇲🇷', name: 'Mauritanie' },
+  { code: '+237', flag: '🇨🇲', name: 'Cameroun' },
+  { code: '+242', flag: '🇨🇬', name: 'Congo' },
+  { code: '+243', flag: '🇨🇩', name: 'RD Congo' },
+  { code: '+212', flag: '🇲🇦', name: 'Maroc' },
+  { code: '+216', flag: '🇹🇳', name: 'Tunisie' },
+  { code: '+213', flag: '🇩🇿', name: 'Algérie' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+32',  flag: '🇧🇪', name: 'Belgique' },
+  { code: '+41',  flag: '🇨🇭', name: 'Suisse' },
+  { code: '+1',   flag: '🇨🇦', name: 'Canada' },
+  { code: '+1',   flag: '🇺🇸', name: 'États-Unis' },
+  { code: '+44',  flag: '🇬🇧', name: 'Royaume-Uni' },
+  { code: '+49',  flag: '🇩🇪', name: 'Allemagne' },
+  { code: '+34',  flag: '🇪🇸', name: 'Espagne' },
+  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
+] as const;
+type CountryEntry = typeof COUNTRY_CODES[number];
 
 type Step = 'home' | 'q1' | 'q2' | 'q3' | 'q4' | 'q5' | 'contact' | 'results';
 
@@ -686,18 +715,43 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
   submitError: string | null
 }) {
   const [prenom, setPrenom] = useState(answers.prenom || "");
-  const [whatsapp, setWhatsapp] = useState(answers.whatsapp || "+227 ");
   const [email, setEmail] = useState(answers.email || "");
+
+  // WhatsApp: indicatif + numéro local séparés
+  const defaultCountry = COUNTRY_CODES[0]; // Niger par défaut
+  const [country, setCountry] = useState<CountryEntry>(defaultCountry);
+  const [localNumber, setLocalNumber] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [whatsappTouched, setWhatsappTouched] = useState(false);
 
-  const whatsappError = whatsappTouched ? validateWhatsApp(whatsapp) : null;
-  const isValid = prenom.trim().length > 1 
-    && validateWhatsApp(whatsapp) === null 
+  // Ferme le menu si on clique en dehors
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+        setCountrySearch("");
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filteredCountries = COUNTRY_CODES.filter(c =>
+    c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    c.code.includes(countrySearch)
+  );
+
+  const fullNumber = country.code + localNumber.replace(/\s/g, '');
+  const whatsappError = whatsappTouched ? validateWhatsApp(fullNumber) : null;
+  const isValid = prenom.trim().length > 1
+    && validateWhatsApp(fullNumber) === null
     && email.trim().length > 3;
 
   const handleSubmit = () => {
     if (!isValid || isSubmitting) return;
-    const normalized = normalizeWhatsApp(whatsapp);
+    const normalized = normalizeWhatsApp(fullNumber);
     onSubmit({ prenom, whatsapp: normalized, email });
   };
 
@@ -734,28 +788,82 @@ function Contact({ answers, onSubmit, isSubmitting, submitError }: {
 
         <div>
           <label className="block text-sm font-bold text-foreground mb-2">Ton numéro WhatsApp</label>
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
-              📱
+          <div className={`flex border-2 rounded-xl overflow-visible transition-colors ${
+            whatsappError ? 'border-destructive' : 'border-border focus-within:border-primary'
+          }`}>
+            {/* Bouton indicatif */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => { setDropdownOpen(o => !o); setCountrySearch(""); }}
+                className="flex items-center gap-1.5 px-3 py-3.5 bg-muted/50 border-r-2 border-border rounded-l-xl font-semibold text-[1rem] whitespace-nowrap focus:outline-none focus:bg-muted transition-colors"
+              >
+                <span className="text-xl">{country.flag}</span>
+                <span className="text-foreground/80 text-sm">{country.code}</span>
+                <ChevronDown size={14} className={`text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Menu déroulant */}
+              {dropdownOpen && (
+                <div className="absolute left-0 top-full mt-1 w-64 bg-background border-2 border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+                  {/* Recherche */}
+                  <div className="p-2 border-b border-border">
+                    <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                      <Search size={14} className="text-muted-foreground shrink-0" />
+                      <input
+                        autoFocus
+                        type="text"
+                        value={countrySearch}
+                        onChange={e => setCountrySearch(e.target.value)}
+                        placeholder="Rechercher un pays…"
+                        className="bg-transparent text-sm focus:outline-none w-full"
+                      />
+                    </div>
+                  </div>
+                  {/* Liste */}
+                  <ul className="max-h-52 overflow-y-auto">
+                    {filteredCountries.length === 0 && (
+                      <li className="px-4 py-3 text-sm text-muted-foreground">Aucun résultat</li>
+                    )}
+                    {filteredCountries.map((c) => (
+                      <li key={c.name}>
+                        <button
+                          type="button"
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors ${
+                            c.name === country.name ? 'bg-primary/10 font-bold text-primary' : ''
+                          }`}
+                          onClick={() => {
+                            setCountry(c);
+                            setDropdownOpen(false);
+                            setCountrySearch("");
+                          }}
+                        >
+                          <span className="text-lg">{c.flag}</span>
+                          <span className="flex-1 text-left">{c.name}</span>
+                          <span className="text-muted-foreground font-mono">{c.code}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-            <input 
+
+            {/* Champ numéro local */}
+            <input
               type="tel"
               data-testid="input-whatsapp"
-              value={whatsapp}
-              onChange={e => setWhatsapp(e.target.value)}
+              value={localNumber}
+              onChange={e => setLocalNumber(e.target.value)}
               onBlur={() => setWhatsappTouched(true)}
-              className={`w-full bg-background border-2 rounded-xl pl-12 pr-4 py-3.5 text-[1.05rem] focus:outline-none transition-colors font-medium ${
-                whatsappError
-                  ? 'border-destructive focus:border-destructive'
-                  : 'border-border focus:border-primary'
-              }`}
-              placeholder="+227 78 09 89 14"
+              className="flex-1 bg-transparent px-4 py-3.5 text-[1.05rem] focus:outline-none font-medium min-w-0"
+              placeholder="78 09 89 14"
             />
           </div>
           {whatsappError && (
             <p className="mt-1.5 text-destructive text-[0.82rem] font-medium">{whatsappError}</p>
           )}
-          {!whatsappError && whatsappTouched && validateWhatsApp(whatsapp) === null && (
+          {!whatsappError && whatsappTouched && validateWhatsApp(fullNumber) === null && (
             <p className="mt-1.5 text-green-600 text-[0.82rem] font-medium flex items-center gap-1">
               <Check size={13} /> Numéro valide
             </p>

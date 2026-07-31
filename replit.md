@@ -1,11 +1,11 @@
-# KPB Education — Test d'orientation
+# KPB Education — Test d'orientation (moteur de faisabilité v2)
 
-Application mobile-first en français pour KPB Education. Les étudiants nigériens répondent à 6 questions sur leur projet d'études à l'étranger, reçoivent des pistes personnalisées, et sont orientés vers WhatsApp (profils qualifiés) ou un webinaire bourses (petits budgets).
+Application mobile-first en français pour KPB Education. Les étudiants répondent à un parcours d'orientation, reçoivent un **verdict chiffré par destination** selon leur capital mobilisable, et sont orientés vers WhatsApp uniquement si au moins une destination est accessible.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/kpb-quiz run dev` — run the quiz frontend
-- `pnpm --filter @workspace/api-server run dev` — run the API server (not used by the quiz, shared infra)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (dashboard)
 - `pnpm run typecheck` — full typecheck across all packages
 - Required env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
@@ -19,35 +19,31 @@ Application mobile-first en français pour KPB Education. Les étudiants nigéri
 
 ## Where things live
 
-- `artifacts/kpb-quiz/src/components/Quiz.tsx` — entire quiz flow (all 8 screens)
-- `artifacts/kpb-quiz/src/lib/supabase.ts` — Supabase client
-- `artifacts/kpb-quiz/src/index.css` — KPB theme (colors, fonts)
-- Supabase table: `leads` (prenom, whatsapp, niveau_etudes, echeance, destinations, domaine, budget_tranche, statut, oriente_vers)
+- `artifacts/kpb-quiz/src/components/Quiz.tsx` — quiz flow (accueil → Q1–Q5b → contact → résultats)
+- `artifacts/kpb-quiz/src/lib/faisabilite.ts` — barème `2026-08` + moteur `evaluer` / statuts / textes de refus
+- `supabase/migrations/20260731120000_moteur_faisabilite_v2.sql` — colonnes leads + `destinations_couts` + RPC `submit_lead` étendu
+- Supabase table `leads` : champs historiques + `capital_an1`, `mensuel_sur_place`, `nationalite`, `faisabilite` (jsonb), `bareme_version`
 
 ## Architecture decisions
 
-- Single-component quiz (no routing): all state in Quiz.tsx, screens rendered conditionally — keeps the bundle tiny and transitions simple.
-- Direct Supabase write from the frontend: no API server needed for this app, anon key with RLS (insert-only policy for anon role).
-- Lead qualification computed client-side before Supabase insert: budget_tranche → statut (HOT/WARM/STANDARD/COLD/A_QUALIFIER) → oriente_vers (whatsapp/webinaire).
-- Framer Motion for screen transitions: slide from right (forward), slide from left (back), 200ms.
+- Single-component quiz (no routing): state in Quiz.tsx.
+- Direct Supabase write via SECURITY DEFINER RPC `submit_lead`.
+- Faisabilité calculée **côté client** avant insert (barème TS) ; `bareme_version` stocké pour traçabilité.
+- Statuts lead : `PRET` · `BOURSE` · `EPARGNE` · `A_QUALIFIER` (plus HOT/WARM/COLD).
+- CTA WhatsApp réservé aux profils `PRET` et `A_QUALIFIER` ; `EPARGNE` = webinaire uniquement (pas de numéro WA).
 
-## Product
+## Product (v2)
 
-- **Accueil**: headline + "Commencer le test" CTA + social proof (+1 200 étudiants)
-- **6 écrans de questions**: niveau, échéance, destination (multi-select), domaine (combobox filtrable), budget (FCFA + €), capture contact (prénom + WhatsApp)
-- **Résultats**: pistes personnalisées par destination, encart urgence si rentrée 2026, CTA WhatsApp ou webinaire selon budget, bouton de partage natif (Web Share API)
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- **Q2** : Janvier-février 2027 · Septembre 2027 · Plus tard · Je ne sais pas (plus de rentrée 2026)
+- **Q3** : 9 destinations chiffrées (Tunisie, Maroc, Belgique, Allemagne, France, Irlande, Canada, Québec, USA)
+- **Q5a** : capital mobilisable en une fois · **Q5b** : mensuel sur place (stocké, non bloquant)
+- **Contact** : prénom, email, WhatsApp + **nationalité** (pré-remplie via indicatif, confirmée)
+- **Résultats** : accessibles d'abord, refus expliqués ensuite, CTA conditionnel
 
 ## Gotchas
 
-- Supabase anon key is stored as env var (not secret) — it's a publishable key with insert-only RLS.
-- `@import url(...)` for Google Fonts MUST be the first line of index.css, before `@import "tailwindcss"`.
-- WhatsApp CTA number: +33768674292. Webinar link: https://webinairebourse.lovable.app
+- Appliquer la migration `20260731120000_moteur_faisabilite_v2.sql` dans le SQL Editor Supabase avant mise en prod.
+- Supabase anon key = publishable ; pas de SELECT/UPDATE anon blanket sur `leads`.
+- WhatsApp CTA : +33768674292 · Webinaire : https://webinairebourse.lovable.app
 - Never use "garanti", "admission garantie", "visa garanti" in any copy.
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Liste PMA / montants belges à revalider (circulaire ARES 2025-001) avant de figer le barème suivant.

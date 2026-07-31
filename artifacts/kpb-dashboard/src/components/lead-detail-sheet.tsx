@@ -22,6 +22,9 @@ interface LeadDetailSheetProps {
 
 const getStatusBadgeVariant = (status: string | null | undefined) => {
   switch (status?.toUpperCase()) {
+    case "PRET": return "pret";
+    case "BOURSE": return "bourse";
+    case "EPARGNE": return "epargne";
     case "HOT": return "hot";
     case "WARM": return "warm";
     case "STANDARD": return "standard";
@@ -108,7 +111,7 @@ export function LeadDetailSheet({ leadId, onClose }: LeadDetailSheetProps) {
               <DetailRow label="Échéance" value={lead.echeance} />
               <DetailRow label="Destinations" value={lead.destinations} />
               <DetailRow label="Domaine d'études" value={lead.domaine} />
-              <DetailRow label="Budget" value={lead.budget_tranche} />
+              <DetailRow label="Capital an 1" value={lead.budget_tranche} />
               <DetailRow
                 label="Date d'entrée"
                 value={

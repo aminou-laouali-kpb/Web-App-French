@@ -15,8 +15,8 @@ import { LogOut, Download, Search, Users, Flame, Clock, RefreshCw, Loader2, Aler
 import { useToast } from "@/hooks/use-toast";
 import { LeadDetailSheet } from "@/components/lead-detail-sheet";
 
-const DESTINATIONS = ["Tous", "France", "Maroc", "Turquie", "Allemagne", "Royaume-Uni", "USA", "Dubaï", "Chine", "Canada"];
-const STATUSES = ["Tous", "HOT", "WARM", "STANDARD", "COLD", "A_QUALIFIER"];
+const DESTINATIONS = ["Tous", "Tunisie", "Maroc", "Belgique", "Allemagne", "France", "Irlande", "Canada", "Québec", "USA"];
+const STATUSES = ["Tous", "PRET", "BOURSE", "EPARGNE", "A_QUALIFIER", "HOT", "WARM", "STANDARD", "COLD"];
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -103,7 +103,7 @@ export default function Dashboard() {
   const exportCSV = () => {
     if (!leads.length) return;
     
-    const headers = ["Date entrée", "Dernière activité", "Prénom", "WhatsApp", "Niveau", "Échéance", "Destinations", "Domaine", "Budget", "Statut", "Orienté vers"];
+    const headers = ["Date entrée", "Dernière activité", "Prénom", "WhatsApp", "Niveau", "Échéance", "Destinations", "Domaine", "Capital an 1", "Statut", "Orienté vers"];
     const rows = leads.map(l => [
       l.created_at ? format(new Date(l.created_at), "dd/MM/yyyy HH:mm") : "",
       l.updated_at ? format(new Date(l.updated_at), "dd/MM/yyyy HH:mm") : "",
@@ -130,6 +130,9 @@ export default function Dashboard() {
 
   const getStatusBadgeVariant = (status: string | null | undefined) => {
     switch (status?.toUpperCase()) {
+      case "PRET": return "pret";
+      case "BOURSE": return "bourse";
+      case "EPARGNE": return "epargne";
       case "HOT": return "hot";
       case "WARM": return "warm";
       case "STANDARD": return "standard";
@@ -191,26 +194,20 @@ export default function Dashboard() {
 
           <Card className="shadow-sm">
             <CardContent className="p-4 text-center">
-              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Hot</p>
-              <h3 className="text-xl font-bold text-red-600">{getStatCount("HOT")}</h3>
+              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Prêt</p>
+              <h3 className="text-xl font-bold text-emerald-600">{getStatCount("PRET")}</h3>
             </CardContent>
           </Card>
           <Card className="shadow-sm">
             <CardContent className="p-4 text-center">
-              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Warm</p>
-              <h3 className="text-xl font-bold text-orange-600">{getStatCount("WARM")}</h3>
+              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Bourse</p>
+              <h3 className="text-xl font-bold text-amber-600">{getStatCount("BOURSE")}</h3>
             </CardContent>
           </Card>
           <Card className="shadow-sm">
             <CardContent className="p-4 text-center">
-              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Std</p>
-              <h3 className="text-xl font-bold text-blue-600">{getStatCount("STANDARD")}</h3>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm">
-            <CardContent className="p-4 text-center">
-              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Cold</p>
-              <h3 className="text-xl font-bold text-gray-600">{getStatCount("COLD")}</h3>
+              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Épargne</p>
+              <h3 className="text-xl font-bold text-slate-600">{getStatCount("EPARGNE")}</h3>
             </CardContent>
           </Card>
           <Card className="shadow-sm">

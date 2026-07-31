@@ -164,13 +164,16 @@ export default function Quiz() {
               <ArrowLeft size={24} />
             </button>
             <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
-                Question {getStepNumber()} sur {TOTAL_QUESTIONS}
+              <div className="text-xs font-semibold text-muted-foreground tracking-wide uppercase flex justify-between items-center">
+                <span>Question {getStepNumber()} sur {TOTAL_QUESTIONS}</span>
+                <span className="text-primary/80">{Math.round((getStepNumber() / TOTAL_QUESTIONS) * 100)}%</span>
               </div>
-              <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
-                  style={{ width: `${(getStepNumber() / TOTAL_QUESTIONS) * 100}%` }}
+              <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full bg-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(getStepNumber() / TOTAL_QUESTIONS) * 100}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
             </div>
@@ -383,29 +386,48 @@ export default function Quiz() {
 // --- Screens ---
 
 function HomeScreen({ onStart }: { onStart: () => void }) {
+  const [showPistes, setShowPistes] = useState(false);
+
+  const steps = [
+    "Tu réponds en 2 minutes",
+    "Tu vois ce qui est à ta portée",
+    "Tu passes à l'action",
+  ];
+
   return (
     <div className="flex-1 flex flex-col min-h-[100dvh]">
-      <div className="bg-primary flex flex-col items-center justify-center px-6 pt-14 pb-10 flex-[1.1]">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="bg-gradient-to-b from-primary via-[hsl(221,83%,32%)] to-primary flex flex-col items-center justify-center px-6 pt-14 pb-8 flex-[1.1]"
+      >
         <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 mb-8">
           <GraduationCap className="text-white" size={20} />
           <span className="text-white font-bold text-[0.95rem] tracking-wide">KPB Education</span>
         </div>
 
-        <h1 className="text-white text-[2rem] leading-[1.15] font-extrabold text-center mb-4">
+        <h1 className="text-white text-[2.1rem] leading-[1.15] font-extrabold text-center mb-4">
           Découvre ce que ta famille peut vraiment financer pour tes études
         </h1>
-        <p className="text-white/80 text-[1rem] text-center font-medium leading-relaxed max-w-[320px]">
+        <p className="text-white/85 text-[1rem] text-center font-medium leading-relaxed max-w-[320px] mb-6">
           Réponds à quelques questions et vois quelles destinations sont à ta portée — sans fausse promesse.
         </p>
 
-        <div className="flex items-center gap-3 mt-8 flex-wrap justify-center">
-          {["🇹🇳", "🇲🇦", "🇧🇪", "🇩🇪", "🇫🇷", "🇮🇪", "🇨🇦", "🇺🇸"].map(flag => (
-            <span key={flag} className="text-2xl drop-shadow-sm">{flag}</span>
+        <div className="flex items-center gap-3 mb-8 flex-wrap justify-center">
+          {["🇹🇳", "🇲🇦", "🇧🇪", "🇩🇪", "🇫🇷", "🇮🇪", "🇨🇦", "🇺🇸"].map((flag, i) => (
+            <motion.span
+              key={flag}
+              initial={{ scale: 0, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ delay: 0.15 + i * 0.05, type: "spring", stiffness: 300, damping: 15 }}
+              className="text-2xl drop-shadow-sm"
+            >
+              {flag}
+            </motion.span>
           ))}
         </div>
-      </div>
 
-      <div className="bg-background flex flex-col items-center px-6 pt-8 pb-10 flex-1">
         <div className="flex items-start justify-center gap-5 w-full max-w-[340px] mb-8">
           {[
             { icon: "⏱️", label: "2 minutes\nchrono" },
@@ -414,20 +436,30 @@ function HomeScreen({ onStart }: { onStart: () => void }) {
           ].map(b => (
             <div key={b.label} className="flex flex-col items-center gap-1.5 flex-1 text-center">
               <span className="text-2xl">{b.icon}</span>
-              <span className="text-[0.78rem] font-semibold text-muted-foreground whitespace-pre-line leading-tight">{b.label}</span>
+              <span className="text-[0.78rem] font-semibold text-white/90 whitespace-pre-line leading-tight">{b.label}</span>
             </div>
           ))}
         </div>
 
-        <button
+        <motion.button
           onClick={onStart}
           data-testid="button-start"
-          className="w-full max-w-[360px] bg-accent text-accent-foreground py-4 rounded-2xl font-extrabold text-[1.15rem] shadow-lg hover:bg-accent/90 active:scale-[0.97] transition-all flex items-center justify-center gap-2 relative overflow-hidden"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full max-w-[360px] bg-accent text-accent-foreground py-4 rounded-2xl font-extrabold text-[1.15rem] shadow-lg shadow-black/20 flex items-center justify-center gap-2 relative overflow-hidden group"
         >
-          <span className="relative z-10">Commencer le test →</span>
-        </button>
+          <span className="relative z-10 flex items-center gap-2">
+            Commencer le test
+            <motion.span
+              animate={{ x: [0, 4, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            >
+              →
+            </motion.span>
+          </span>
+        </motion.button>
 
-        <div className="flex items-center gap-3 mt-5">
+        <div className="flex items-center gap-3 mt-6">
           <div className="flex -space-x-2">
             {[
               { initials: "AM", bg: "bg-blue-500" },
@@ -435,15 +467,52 @@ function HomeScreen({ onStart }: { onStart: () => void }) {
               { initials: "FK", bg: "bg-violet-500" },
               { initials: "SD", bg: "bg-orange-500" },
             ].map(av => (
-              <div key={av.initials} className={`w-8 h-8 rounded-full ${av.bg} flex items-center justify-center text-white text-[0.65rem] font-bold ring-2 ring-background`}>
+              <div key={av.initials} className={`w-8 h-8 rounded-full ${av.bg} flex items-center justify-center text-white text-[0.65rem] font-bold ring-2 ring-primary`}>
                 {av.initials}
               </div>
             ))}
           </div>
-          <p className="text-[0.8rem] text-muted-foreground font-medium">
-            <span className="text-foreground font-bold">+1 200</span> étudiants accompagnés
+          <p className="text-[0.8rem] text-white/80 font-medium">
+            <span className="text-white font-bold">+1 200</span> étudiants accompagnés
           </p>
         </div>
+      </motion.div>
+
+      <div className="bg-background flex flex-col items-center px-6 pt-6 pb-10 flex-1">
+        <button
+          type="button"
+          onClick={() => setShowPistes(!showPistes)}
+          className="w-full max-w-[360px] flex items-center justify-between bg-muted rounded-xl px-4 py-3.5 mb-4"
+        >
+          <span className="font-semibold text-foreground text-[0.95rem]">Comment ça marche ?</span>
+          {showPistes ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+        </button>
+
+        <AnimatePresence>
+          {showPistes && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="w-full max-w-[360px] overflow-hidden mb-4"
+            >
+              <div className="bg-muted/60 rounded-xl p-4 space-y-3">
+                {steps.map((s, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center shrink-0">
+                      {i + 1}
+                    </span>
+                    <span className="text-[0.9rem] text-foreground font-medium">{s}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <p className="text-center text-[0.85rem] text-muted-foreground max-w-[300px] leading-relaxed">
+          Pas de vente forcée : si une destination n'est pas finançable, on te le dit tout de suite.
+        </p>
       </div>
     </div>
   );
@@ -451,32 +520,48 @@ function HomeScreen({ onStart }: { onStart: () => void }) {
 
 function OptionList({
   title,
+  subtitle,
   options,
   selected,
   onSelect,
 }: {
   title: string;
+  subtitle?: string;
   options: string[];
   selected?: string;
   onSelect: (val: string) => void;
 }) {
   return (
     <div className="flex-1 flex flex-col p-6">
-      <h2 className="text-[1.5rem] leading-tight font-bold text-primary mb-8">{title}</h2>
+      <h2 className="text-[1.5rem] leading-tight font-bold text-primary mb-2">{title}</h2>
+      {subtitle && <p className="text-sm text-muted-foreground font-medium mb-6">{subtitle}</p>}
       <div className="flex flex-col gap-3">
         {options.map(opt => {
           const isSelected = selected === opt;
           return (
-            <button 
+            <motion.button
               key={opt}
+              whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(opt)}
-              className={`w-full p-5 border-2 rounded-xl text-left font-semibold text-foreground transition-all flex justify-between items-center active:scale-[0.98] ${
-                isSelected ? 'border-primary bg-secondary/30' : 'border-border hover:border-primary/50 hover:bg-secondary/10'
+              className={`w-full p-5 border-2 rounded-xl text-left font-semibold text-foreground transition-all flex justify-between items-center ${
+                isSelected
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/50 hover:bg-secondary/10'
               }`}
             >
               <span className="text-[1.05rem]">{opt}</span>
-              {isSelected && <Check className="text-primary flex-shrink-0" size={20} />}
-            </button>
+              <AnimatePresence>
+                {isSelected && (
+                  <motion.span
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    exit={{ scale: 0 }}
+                  >
+                    <Check className="text-primary flex-shrink-0" size={20} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           );
         })}
       </div>
@@ -669,19 +754,28 @@ function Q5a({ answers, onSelect }: { answers: QuizAnswers, onSelect: (code: str
         {CAPITAL_OPTIONS.map(opt => {
           const isSelected = answers.capital_an1 === opt.code;
           return (
-            <button 
+            <motion.button 
               key={opt.code}
+              whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(opt.code)}
-              className={`w-full p-4 border-2 rounded-xl text-left transition-all flex justify-between items-center active:scale-[0.98] ${
-                isSelected ? 'border-primary bg-secondary/30' : 'border-border hover:border-primary/50 hover:bg-secondary/10'
+              className={`w-full p-4 border-2 rounded-xl text-left transition-all flex justify-between items-center ${
+                isSelected
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/50 hover:bg-secondary/10'
               }`}
             >
               <div className="flex flex-col">
                 <span className="font-bold text-[1.05rem] text-foreground">{opt.primary}</span>
                 {opt.secondary && <span className="text-sm font-medium text-muted-foreground mt-0.5">{opt.secondary}</span>}
               </div>
-              {isSelected && <Check className="text-primary flex-shrink-0" size={20} />}
-            </button>
+              <AnimatePresence>
+                {isSelected && (
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                    <Check className="text-primary flex-shrink-0" size={20} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           );
         })}
       </div>
@@ -703,16 +797,25 @@ function Q5b({ answers, onSelect }: { answers: QuizAnswers, onSelect: (code: str
         {MENSUEL_OPTIONS.map(opt => {
           const isSelected = answers.mensuel_sur_place === opt.code;
           return (
-            <button 
+            <motion.button 
               key={opt.code}
+              whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(opt.code)}
-              className={`w-full p-4 border-2 rounded-xl text-left transition-all flex justify-between items-center active:scale-[0.98] ${
-                isSelected ? 'border-primary bg-secondary/30' : 'border-border hover:border-primary/50 hover:bg-secondary/10'
+              className={`w-full p-4 border-2 rounded-xl text-left transition-all flex justify-between items-center ${
+                isSelected
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/50 hover:bg-secondary/10'
               }`}
             >
               <span className="font-bold text-[1.05rem] text-foreground">{opt.primary}</span>
-              {isSelected && <Check className="text-primary flex-shrink-0" size={20} />}
-            </button>
+              <AnimatePresence>
+                {isSelected && (
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                    <Check className="text-primary flex-shrink-0" size={20} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           );
         })}
       </div>
@@ -1015,6 +1118,7 @@ function RefusalCard({
 function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () => void }) {
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
   const [showAllRefusals, setShowAllRefusals] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const evals = useMemo(() => {
     if (answers.faisabilite?.length) return answers.faisabilite;
@@ -1023,6 +1127,14 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
 
   const statut = (answers.statut as LeadStatut) || deriveLeadStatus(evals);
   const accessible = evals.filter(e => e.verdict === "accessible");
+
+  useEffect(() => {
+    if (accessible.length > 0) {
+      const t = setTimeout(() => setShowConfetti(true), 600);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [accessible.length]);
   const avecBourse = evals.filter(e => e.verdict === "accessible_avec_bourse");
   const chosenSet = new Set((answers.destinations || []).filter(d => d !== "Je ne sais pas"));
   // Refusals = chosen destinations that are out of reach (not the "avec bourse" ones)
@@ -1042,22 +1154,27 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
     A_QUALIFIER: "À chiffrer 🔍",
   };
 
+  const accessibleNames = accessible.map(a => `${a.flag} ${a.nom}`).join(", ");
+  const shareText = accessible.length > 0
+    ? `Je viens de faire le test d'orientation KPB : ma famille peut financer ${accessibleNames} 🎯 Teste gratuitement ton projet d'études à l'étranger !`
+    : `Je viens de faire le test d'orientation KPB : verdict chiffré et pistes concrètes pour étudier à l'étranger 🎓 Teste-le toi aussi !`;
+
   const handleShare = async () => {
     const shareData = {
       title: "Test d'orientation KPB Education",
-      text: "Je viens de tester cet outil gratuit pour trouver des opportunités d'études à l'étranger 🎓 Teste-le toi aussi :",
+      text: shareText,
       url: window.location.href,
     };
     if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
       navigator.share(shareData).catch(console.error);
     } else {
-      await navigator.clipboard.writeText(window.location.href).catch(console.error);
+      await navigator.clipboard.writeText(shareText + " " + window.location.href).catch(console.error);
       setShareState('copied');
       setTimeout(() => setShareState('idle'), 2500);
     }
   };
 
-  const waShareUrl = `https://wa.me/?text=${encodeURIComponent("Je viens de tester cet outil gratuit pour trouver des opportunités d'études à l'étranger 🎓 Teste-le toi aussi : " + window.location.href)}`;
+  const waShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + window.location.href)}`;
 
   const destNames = accessible.map(a => a.nom).join(", ") || (answers.destinations || []).join(", ");
   const waPret = `https://wa.me/33768674292?text=${encodeURIComponent(
@@ -1073,13 +1190,28 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
   return (
     <div className="flex-1 flex flex-col bg-background">
       <div className="bg-gradient-to-br from-primary to-[hsl(221,83%,38%)] px-6 pt-8 pb-8 text-white">
-        <p className="text-white/70 text-sm font-semibold uppercase tracking-widest mb-1">
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-white/70 text-sm font-semibold uppercase tracking-widest mb-1"
+        >
           {profileLabels[statut] || "Ton profil"}
-        </p>
-        <h1 className="text-[1.75rem] font-extrabold leading-tight mb-3">
+        </motion.p>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+          className="text-[1.75rem] font-extrabold leading-tight mb-3"
+        >
           <span className="capitalize">{answers.prenom}</span>, voici ton verdict 🎯
-        </h1>
-        <div className="flex flex-wrap gap-2">
+        </motion.h1>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+          className="flex flex-wrap gap-2"
+        >
           {answers.niveau_etudes && (
             <span className="bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">{answers.niveau_etudes}</span>
           )}
@@ -1092,7 +1224,38 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
           <span className="bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">
             Capital : {capitalLabel(answers.capital_an1)}
           </span>
-        </div>
+        </motion.div>
+
+        {/* Confetti burst for accessible results */}
+        {showConfetti && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden"
+          >
+            {[...Array(24)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-3 h-3 rounded-sm"
+                style={{
+                  backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#fbbf24'][i % 6],
+                  left: `${5 + (i * 4) % 90}%`,
+                  top: '-5%',
+                }}
+                animate={{
+                  y: ['0vh', '110vh'],
+                  x: [0, (i % 2 === 0 ? 30 : -30)],
+                  rotate: [0, 360 + i * 15],
+                }}
+                transition={{
+                  duration: 2.2 + (i % 3) * 0.4,
+                  delay: i * 0.06,
+                  ease: 'easeOut',
+                }}
+              />
+            ))}
+          </motion.div>
+        )}
       </div>
 
       <div className="p-5 pb-24 space-y-6">
@@ -1261,31 +1424,38 @@ function Results({ answers, onRestart }: { answers: QuizAnswers, onRestart: () =
           )}
         </div>
 
-        <div className="bg-muted rounded-2xl p-5 space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl p-5 space-y-3 border border-primary/10"
+        >
           <div className="text-center">
-            <h4 className="font-bold text-foreground text-[1rem] mb-1">Tes amis aussi peuvent trouver leur voie 🚀</h4>
-            <p className="text-muted-foreground text-[0.85rem]">Partage cet outil gratuit avec tes amis qui veulent étudier à l&apos;étranger.</p>
+            <h4 className="font-extrabold text-foreground text-[1.05rem] mb-1">Tes amis aussi peuvent trouver leur voie 🚀</h4>
+            <p className="text-muted-foreground text-[0.88rem]">Partage cet outil gratuit — ils te diront merci quand ils sauront quelle destination est vraiment à leur portée.</p>
           </div>
-          <button
-            onClick={handleShare}
-            data-testid="button-share"
-            className="w-full bg-background border-2 border-border text-foreground py-3.5 rounded-xl font-bold text-[0.95rem] hover:bg-secondary/20 transition-colors flex items-center justify-center gap-2"
-          >
-            {shareState === 'copied' ? (
-              <><Check size={18} className="text-green-600" /> Lien copié !</>
-            ) : (
-              <><Share2 size={18} /> Partager l&apos;outil</>
-            )}
-          </button>
-          <a
-            href={waShareUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full bg-[#25D366] text-white py-3.5 rounded-xl font-bold text-[0.95rem] hover:bg-[#22bf5b] transition-colors flex items-center justify-center gap-2"
-          >
-            <span className="text-lg">💬</span> Partager sur WhatsApp
-          </a>
-        </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleShare}
+              data-testid="button-share"
+              className="flex-1 bg-background border-2 border-primary/20 text-primary py-3.5 rounded-xl font-bold text-[0.92rem] hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+            >
+              {shareState === 'copied' ? (
+                <><Check size={18} className="text-green-600" /> Lien copié !</>
+              ) : (
+                <><Share2 size={18} /> Partager</>
+              )}
+            </button>
+            <a
+              href={waShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 bg-[#25D366] text-white py-3.5 rounded-xl font-bold text-[0.92rem] hover:bg-[#22bf5b] transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">💬</span> WhatsApp
+            </a>
+          </div>
+        </motion.div>
 
         <p className="text-center text-[0.7rem] text-muted-foreground">Barème {BAREME_VERSION}</p>
 

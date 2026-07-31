@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "sGQWA7z2pssFlJJ7LOUgm"
+uri = "file://KPB_Education_Project_Overview.md"
+type = "text"
+title = "KPB Education — Vue d'ensemble du projet"
